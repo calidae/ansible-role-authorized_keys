@@ -3,7 +3,11 @@ services:
 
   sshd:
     build: .
+    environment:
+      - SSH_USER=alice
 
   probe:
     build: .
     command: sleep infinity
+    depends_on:
+      - sshd

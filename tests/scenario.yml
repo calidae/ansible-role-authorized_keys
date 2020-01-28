@@ -1,0 +1,39 @@
+---
+
+- hosts: probe
+  tasks:
+    - name: copy private keys
+      copy:
+        src: '{{ item }}'
+        dest: '/tmp/{{ item }}'
+        mode: '0600'
+      loop:
+        - beth
+        - claire
+        - daisy
+
+
+- hosts: sshd
+  roles:
+    - test
+  vars:
+    authorized_keys_present:
+      - beth.pub
+      - claire.pub
+      - daisy.pub
+    authorized_keys_users:
+      - root
+      - alice
+
+
+- hosts: probe
+  tasks:
+    - name: ping over ssh
+      shell: ssh -o 'StrictHostKeyChecking false' -l {{item[0]}} -i /tmp/{{item[1]}} sshd 'id'
+      loop:
+        - ["root", "beth"]
+        - ["root", "claire"]
+        - ["root", "daisy"]
+        - ["alice", "beth"]
+        - ["alice", "claire"]
+        - ["alice", "daisy"]

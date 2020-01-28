@@ -1,5 +1,0 @@
----
-
-- hosts: sshd
-  roles:
-    - calidae.authorized_keys

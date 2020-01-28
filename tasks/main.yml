@@ -1,2 +1,12 @@
 ---
-# tasks file for calidae.authorized_keys
+
+# - name: debug Add authorized keys
+#   debug:
+#     msg: "{{ authorized_keys_users |product(authorized_keys_present) |list }}"
+
+- name: Add authorized keys
+  authorized_key:
+    user: "{{ item[0] }}"
+    key: '{{ lookup("file", item[1]) }}'
+    state: present
+  loop: "{{ authorized_keys_users |product(authorized_keys_present) |list }}"

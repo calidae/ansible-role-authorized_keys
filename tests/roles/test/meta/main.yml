@@ -1,0 +1,16 @@
+galaxy_info:
+  author: Calidae
+  description: Test authorized keys role
+  company: Calidae
+  license: BSD
+  min_ansible_version: 2.9
+  platforms:
+  - name: Ubuntu
+    versions:
+    - bionic
+  galaxy_tags:
+    - test
+    - ssh
+    - authorized_keys
+dependencies:
+  - calidae.authorized_keys
