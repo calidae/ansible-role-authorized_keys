@@ -1,2 +1,2 @@
-localhost
-
+sshd ansible_host=ansible_role_authorized_keys_test_sshd_1
+probe ansible_host=ansible_role_authorized_keys_test_probe_1

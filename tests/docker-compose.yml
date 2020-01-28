@@ -1,0 +1,9 @@
+version: '3'
+services:
+
+  sshd:
+    build: .
+
+  probe:
+    build: .
+    command: sleep infinity
