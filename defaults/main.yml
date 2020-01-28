@@ -1,7 +1,5 @@
 ---
 
-authorized_keys_users:
-  - root
-authorized_keys_present: []
+authorized_keys_present: {root: []}
 authorized_keys_absent: []
 authorized_keys_exclusive: []

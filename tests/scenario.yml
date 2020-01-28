@@ -39,3 +39,29 @@
         - {user: "alice", key: "beth"}
         - {user: "alice", key: "claire"}
         - {user: "alice", key: "daisy"}
+
+
+- hosts: sshd
+  roles:
+    - test
+  vars:
+    authorized_keys_present:
+      root: []
+      alice: []
+    authorized_keys_absent:
+      - daisy.pub
+
+
+- hosts: probe
+  tasks:
+    - name: ping over ssh
+      shell: ssh -o 'StrictHostKeyChecking false' -l {{item.user}} -i /tmp/{{item.key}} sshd 'whoami'
+      loop:
+        - {user: "root", key: "daisy"}
+        - {user: "alice", key: "daisy"}
+      register: ping_over_ssh
+      ignore_errors: true
+
+    - name: assert it failed
+      debug:
+        msg: '{{ ping_over_ssh.results }}'

@@ -8,3 +8,10 @@
   with_subelements:
     - "{{ authorized_keys_present |dict2items }}"
     - "value"
+
+- name: Remove authorized keys
+  authorized_key:
+    user: "{{ item.0 }}"
+    key: '{{ lookup("file", item.1) }}'
+    state: absent
+  loop: "{{ authorized_keys_present.keys() |list |product(authorized_keys_absent) |list}}"
