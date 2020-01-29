@@ -1,5 +1,5 @@
 ---
 
 authorized_keys_present: {root: []}
-authorized_keys_absent: []
-authorized_keys_exclusive: []
+authorized_keys_banned: []
+authorized_keys_exclusive: {}

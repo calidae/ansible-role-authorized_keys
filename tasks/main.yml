@@ -9,9 +9,18 @@
     - "{{ authorized_keys_present |dict2items }}"
     - "value"
 
-- name: Remove authorized keys
+- name: Ban authorized keys
   authorized_key:
     user: "{{ item.0 }}"
     key: '{{ lookup("file", item.1) }}'
     state: absent
-  loop: "{{ authorized_keys_present.keys() |list |product(authorized_keys_absent) |list}}"
+  loop: "{{ authorized_keys_present.keys() |list |product(authorized_keys_banned) |list}}"
+
+- name: Set exclusive authorized keys
+  authorized_key:
+    user: "{{ item.key }}"
+    key: "{{ item.value | default([]) | list | join('\n') }}"
+    state: present
+    exclusive: true
+  loop: "{{ authorized_keys_exclusive |dict2items }}"
+  when: item.value

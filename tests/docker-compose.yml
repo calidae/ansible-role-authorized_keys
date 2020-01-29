@@ -4,7 +4,7 @@ services:
   sshd:
     build: .
     environment:
-      - SSH_USER=alice
+      - SSH_USER=ubuntu
 
   probe:
     build: .

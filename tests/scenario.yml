@@ -1,5 +1,6 @@
 ---
 
+# GIVEN Alice, Beth and Claire's ssh keys
 - hosts: probe
   tasks:
     - name: copy private keys
@@ -8,61 +9,109 @@
         dest: '/tmp/{{ item }}'
         mode: '0600'
       loop:
+        - alice
         - beth
         - claire
-        - daisy
 
-
+# WHEN All are present
 - hosts: sshd
   roles:
     - test
   vars:
     authorized_keys_present:
       root:
+        - alice.pub
         - beth.pub
         - claire.pub
-        - daisy.pub
-      alice:
+      ubuntu:
+        - alice.pub
         - beth.pub
         - claire.pub
-        - daisy.pub
 
-
+# THEN Everyone can connect to ssh
 - hosts: probe
   tasks:
     - name: Everyone pings over ssh
-      shell: ssh -o 'StrictHostKeyChecking false' -l {{item.user}} -i /tmp/{{item.key}} sshd exit
+      shell: ssh -q -o 'StrictHostKeyChecking false' -l {{item.user}} -i /tmp/{{item.key}} sshd exit
       loop:
+        - {user: "root", key: "alice"}
         - {user: "root", key: "beth"}
         - {user: "root", key: "claire"}
-        - {user: "root", key: "daisy"}
-        - {user: "alice", key: "beth"}
-        - {user: "alice", key: "claire"}
-        - {user: "alice", key: "daisy"}
+        - {user: "ubuntu", key: "alice"}
+        - {user: "ubuntu", key: "beth"}
+        - {user: "ubuntu", key: "claire"}
 
-
+# WHEN Alice is banned
 - hosts: sshd
   roles:
     - test
   vars:
     authorized_keys_present:
       root: []
-      alice: []
-    authorized_keys_absent:
-      - daisy.pub
+      ubuntu: []
+    authorized_keys_banned:
+      - alice.pub
 
-
+# THEN Alice can't connect as any user
 - hosts: probe
   tasks:
-    - name: Daisy pings over ssh
+    - name: Alice pings over ssh
       shell: ssh -q -o 'StrictHostKeyChecking false' -l {{item.user}} -i /tmp/{{item.key}} sshd exit
       loop:
-        - {user: "root", key: "daisy"}
-        - {user: "alice", key: "daisy"}
+        - {user: "root", key: "alice"}
+        - {user: "ubuntu", key: "alice"}
       register: ping_over_ssh
       ignore_errors: true
 
-    - name: Assert Daisy's ping failed
+    - name: Assert Alice's ping failed
       fail:
-        msg: 'Daisy unexpectedly logged in'
+        msg: 'alice unexpectedly logged in'
       when: '[255, 255] != (ping_over_ssh.results |map(attribute="rc") |list)'
+
+# WHEN ubuntu's keys are stated explicitly (Alice and Beth)
+- hosts: sshd
+  roles:
+    - test
+  vars:
+    authorized_keys_exclusive:
+      ubuntu:
+        - '{{ lookup("file", "alice.pub") }}'
+        - '{{ lookup("file", "beth.pub") }}'
+
+# THEN Alice and Beth can connect, but not Claire
+- hosts: probe
+  tasks:
+    - name: Alice and Beth ping ubuntu over ssh
+      shell: ssh -q -o 'StrictHostKeyChecking false' -l {{item.user}} -i /tmp/{{item.key}} sshd exit
+      loop:
+        - {user: "ubuntu", key: "alice"}
+        - {user: "ubuntu", key: "beth"}
+
+    - name: Claire tries to ping over ssh
+      shell: ssh -q -o 'StrictHostKeyChecking false' -l {{item.user}} -i /tmp/{{item.key}} sshd exit
+      loop:
+        - {user: "ubuntu", key: "claire"}
+      register: ping_over_ssh
+      ignore_errors: true
+
+    - name: Assert Claire's ping failed
+      fail:
+        msg: Claire unexpectedly logged in'
+      when: '[255] != (ping_over_ssh.results |map(attribute="rc") |list)'
+
+# WHEN root's keys are emptied
+- hosts: sshd
+  roles:
+    - test
+  vars:
+    authorized_keys_exclusive:
+      root: []
+
+# THEN the server is NOT bricked (Beth can still connect from the beggining)
+- hosts: probe
+  tasks:
+    - name: Beth and Claire ping root over ssh
+      shell: ssh -q -o 'StrictHostKeyChecking false' -l {{item.user}} -i /tmp/{{item.key}} sshd exit
+      loop:
+        - {user: "root", key: "beth"}
+        - {user: "root", key: "claire"}
