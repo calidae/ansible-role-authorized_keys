@@ -1,6 +1,7 @@
 dependencies: []
 galaxy_info:
   author: Calidae
+  role_name: authorized_keys
   description: Manage ssh authorized keys
   company: www.calidae.com
   license: BSD
