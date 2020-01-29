@@ -3,23 +3,23 @@
 - name: Add authorized keys
   authorized_key:
     user: "{{ item.0.key }}"
-    key: '{{ lookup("file", item.1) }}'
+    key: "{{ item.1 }}"
     state: present
   with_subelements:
     - "{{ authorized_keys_present |dict2items }}"
-    - "value"
+    - value
 
 - name: Ban authorized keys
   authorized_key:
     user: "{{ item.0 }}"
-    key: '{{ lookup("file", item.1) }}'
+    key: "{{ item.1 }}"
     state: absent
   loop: "{{ authorized_keys_present.keys() |list |product(authorized_keys_banned) |list}}"
 
 - name: Set exclusive authorized keys
   authorized_key:
     user: "{{ item.key }}"
-    key: "{{ item.value | default([]) | list | join('\n') }}"
+    key: "{{ item.value |join('\n') }}"
     state: present
     exclusive: true
   loop: "{{ authorized_keys_exclusive |dict2items }}"

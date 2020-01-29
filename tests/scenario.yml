@@ -1,9 +1,16 @@
 ---
 
+# GIVEN An existing ubuntu user
+- hosts: sshd
+  tasks:
+    - name: Create dummy user
+      user:
+        name: ubuntu
+
 # GIVEN Alice, Beth and Claire's ssh keys
 - hosts: probe
   tasks:
-    - name: copy private keys
+    - name: Copy private keys
       copy:
         src: '{{ item }}'
         dest: '/tmp/{{ item }}'
@@ -12,21 +19,28 @@
         - alice
         - beth
         - claire
+- hosts: sshd
+  tasks:
+    - name: Set public keys as facts
+      set_fact:
+        alice: '{{ lookup("file", "alice.pub") }}'
+        beth: '{{ lookup("file", "beth.pub") }}'
+        claire: '{{ lookup("file", "claire.pub") }}'
 
-# WHEN All are present
+# WHEN All keys are present
 - hosts: sshd
   roles:
-    - test
+    - calidae.authorized_keys
   vars:
     authorized_keys_present:
       root:
-        - alice.pub
-        - beth.pub
-        - claire.pub
+        - '{{ alice }}'
+        - '{{ beth }}'
+        - '{{ claire }}'
       ubuntu:
-        - alice.pub
-        - beth.pub
-        - claire.pub
+        - '{{ alice }}'
+        - '{{ beth }}'
+        - '{{ claire }}'
 
 # THEN Everyone can connect to ssh
 - hosts: probe
@@ -44,13 +58,13 @@
 # WHEN Alice is banned
 - hosts: sshd
   roles:
-    - test
+    - calidae.authorized_keys
   vars:
     authorized_keys_present:
       root: []
       ubuntu: []
     authorized_keys_banned:
-      - alice.pub
+      - '{{ alice }}'
 
 # THEN Alice can't connect as any user
 - hosts: probe
@@ -71,12 +85,12 @@
 # WHEN ubuntu's keys are stated explicitly (Alice and Beth)
 - hosts: sshd
   roles:
-    - test
+    - calidae.authorized_keys
   vars:
     authorized_keys_exclusive:
       ubuntu:
-        - '{{ lookup("file", "alice.pub") }}'
-        - '{{ lookup("file", "beth.pub") }}'
+        - '{{ alice }}'
+        - '{{ beth }}'
 
 # THEN Alice and Beth can connect, but not Claire
 - hosts: probe
@@ -96,13 +110,13 @@
 
     - name: Assert Claire's ping failed
       fail:
-        msg: Claire unexpectedly logged in'
+        msg: Claire unexpectedly logged in
       when: '[255] != (ping_over_ssh.results |map(attribute="rc") |list)'
 
 # WHEN root's keys are emptied
 - hosts: sshd
   roles:
-    - test
+    - calidae.authorized_keys
   vars:
     authorized_keys_exclusive:
       root: []
