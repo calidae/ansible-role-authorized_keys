@@ -14,7 +14,7 @@
     user: "{{ item.0 }}"
     key: "{{ item.1 }}"
     state: absent
-  loop: "{{ authorized_keys_present.keys() |list |product(authorized_keys_banned) |list}}"
+  loop: "{{ authorized_keys_present.keys() |list |product(authorized_keys_banned) |list }}"
 
 - name: Set exclusive authorized keys
   authorized_key:

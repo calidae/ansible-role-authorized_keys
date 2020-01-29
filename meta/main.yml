@@ -13,6 +13,6 @@ galaxy_info:
   galaxy_tags:
     - ssh
     - sshd
-    - authorized_key
-    - authorized_keys
+    - authorizedkey
+    - authorizedkeys
     - security
