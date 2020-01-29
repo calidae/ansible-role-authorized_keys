@@ -30,8 +30,8 @@
 
 - hosts: probe
   tasks:
-    - name: ping over ssh
-      shell: ssh -o 'StrictHostKeyChecking false' -l {{item.user}} -i /tmp/{{item.key}} sshd 'whoami'
+    - name: Everyone pings over ssh
+      shell: ssh -o 'StrictHostKeyChecking false' -l {{item.user}} -i /tmp/{{item.key}} sshd exit
       loop:
         - {user: "root", key: "beth"}
         - {user: "root", key: "claire"}
@@ -54,14 +54,15 @@
 
 - hosts: probe
   tasks:
-    - name: ping over ssh
-      shell: ssh -o 'StrictHostKeyChecking false' -l {{item.user}} -i /tmp/{{item.key}} sshd 'whoami'
+    - name: Daisy pings over ssh
+      shell: ssh -q -o 'StrictHostKeyChecking false' -l {{item.user}} -i /tmp/{{item.key}} sshd exit
       loop:
         - {user: "root", key: "daisy"}
         - {user: "alice", key: "daisy"}
       register: ping_over_ssh
       ignore_errors: true
 
-    - name: assert it failed
-      debug:
-        msg: '{{ ping_over_ssh.results }}'
+    - name: Assert Daisy's ping failed
+      fail:
+        msg: 'Daisy unexpectedly logged in'
+      when: '[255, 255] != (ping_over_ssh.results |map(attribute="rc") |list)'
